@@ -4,6 +4,12 @@
 
 A Solidity vault on Polkadot Hub that executes a cross-chain carry trade — minting yield-bearing vDOT on Bifrost and hedging basis risk on Hydration — using XCM composed entirely in Solidity.
 
+> **Known Limitation (as of February 27, 2026):**
+> `executeCarry()` is currently not functional on Polkadot Hub mainnet in this repo's current state.
+> In Trust Wallet, calling `executeCarry()` reverts with:
+> `3: execution reverted: revert: xcm execute failed: message maybe invalid or execution constraints not satisfied`
+> I am actively working on a fix and will update this repository once `executeCarry()` is stable on mainnet.
+
 ---
 
 ## The Carry Trade
