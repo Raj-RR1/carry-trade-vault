@@ -1,6 +1,6 @@
 # Carry Trade Vault
 
-**Polkadot Solidity Hackathon 2026 — Track 2: PVM Smart Contracts**
+**Polkadot Solidity Hackathon 2026 — deployed on Polkadot Hub EVM (REVM)**
 
 A Solidity vault on Polkadot Hub that executes a cross-chain carry trade — minting yield-bearing vDOT on Bifrost and hedging basis risk on Hydration — using XCM composed entirely in Solidity.
 
@@ -70,7 +70,7 @@ Both messages from the same block are processed FIFO on the destination — Step
 | **SCALE Encoding in Solidity** | `XCMBuilder.sol` — compact integers, XCM V5 instructions, asset/location encoding |
 | **Polkadot Native Assets** | DOT as `msg.value`; vDOT registered as foreign asset on AssetHub |
 | **Post-Migration DOT** | Correct `{parents:1, X1(Parachain(1000))}` DOT location (Nov 2025 reserve migration) |
-| **PVM Experiment** | Full XCM message construction running on PolkaVM — no off-chain encoding required |
+| **REVM Deployment** | Production flow uses standard EVM bytecode on Polkadot Hub EVM (REVM) |
 | **Split XCM Fees** | Per-destination fee constants matching BuyExecution upfront charging behavior |
 
 ---
@@ -90,13 +90,15 @@ carry-trade-vault/
 │       └── XCMBuilderHarness.sol    Exposes library functions for unit testing
 ├── scripts/
 │   ├── deploy.ts                    Deploy + configure vault on Polkadot Hub
-│   └── generateCallBytes.ts         Generate SCALE call bytes via polkadot-js API
+│   ├── generateCallBytes.ts         Generate SCALE call bytes via polkadot-js API
+│   └── evmToSubstrate.ts            Convert EVM address → AccountId32/SS58 (0xEE padding)
 ├── test/
 │   └── CarryTradeVault.test.ts      67 tests — full coverage
 ├── frontend/
 │   └── ...                          React + Vite dashboard (deposit, withdraw, owner actions)
 ├── GUIDE.md                         Hacker's guide to XCM precompile + SCALE encoding
 ├── TODO.md                          Status tracker and remaining work
+├── .env.example                     Environment variable template
 ├── hardhat.config.ts
 ├── package.json
 └── tsconfig.json
@@ -126,8 +128,10 @@ npx hardhat test
 Connect to Bifrost + Hydration RPCs to generate SCALE-encoded pallet calls:
 
 ```bash
-# Set amount in .env first:
-# DOT_AMOUNT_PLANCK=10000000000  (1 DOT = 1e10 planck)
+# Set per-destination DOT amounts in .env first (planck, 10 decimals):
+# BIFROST_DOT_PLANCK=20900000000
+# HYDRATION_DOT_PLANCK=8900000000
+# Note: each value should already subtract 0.01 DOT XCM transfer fee.
 npm run gen:callbytes
 ```
 
@@ -141,8 +145,15 @@ HYDRATION_ROUTER_SELL_CALL=0x430005...
 
 ```bash
 cp .env.example .env
-# Set: PRIVATE_KEY, BIFROST_MINT_CALL, HYDRATION_ROUTER_SELL_CALL,
-#      VAULT_SUBSTRATE_ACCOUNT, ASSET_HUB_SOVEREIGN
+# Set: PRIVATE_KEY, BIFROST_DOT_PLANCK, HYDRATION_DOT_PLANCK,
+#      BIFROST_MINT_CALL, HYDRATION_ROUTER_SELL_CALL, ASSET_HUB_SOVEREIGN
+```
+
+Derive `VAULT_SUBSTRATE_ACCOUNT` from your deployed contract (or wallet) EVM address:
+
+```bash
+npx ts-node scripts/evmToSubstrate.ts 0xYourAddress
+# Paste the AccountId32 output into VAULT_SUBSTRATE_ACCOUNT in .env
 ```
 
 ```bash
@@ -167,8 +178,8 @@ npm run frontend:dev
 
 | Network | Chain ID | RPC | Explorer |
 |---|---|---|---|
-| **Polkadot Hub Mainnet** | `420420419` | `https://eth-rpc.polkadot.io/` | [Blockscout](https://blockscout.polkadot.io/) |
-| **Polkadot Hub Testnet** | `420420417` | `https://eth-rpc-testnet.polkadot.io/` | [Blockscout Testnet](https://blockscout-testnet.polkadot.io/) |
+| **Polkadot Hub Mainnet** | `420420419` | `https://services.polkadothub-rpc.com/mainnet/` | [Blockscout](https://blockscout.polkadot.io/) |
+| **Polkadot Hub Testnet** | `420420417` | `https://services.polkadothub-rpc.com/testnet/` | [Blockscout Testnet](https://blockscout-testnet.polkadot.io/) |
 
 **Key Addresses:**
 - XCM Precompile: `0x00000000000000000000000000000000000a0000`
@@ -363,4 +374,4 @@ compact(instruction_count)      ← number of instructions
 
 ---
 
-*Built for the [Polkadot Solidity Hackathon 2026](https://dorahacks.io/) — Track 2: PVM Smart Contracts*
+*Built for the [Polkadot Solidity Hackathon 2026](https://dorahacks.io/) — implemented on Polkadot Hub EVM (REVM)*
