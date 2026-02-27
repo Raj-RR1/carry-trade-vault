@@ -54,18 +54,41 @@ const HYDRATION_RPCS = [
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 32-byte substrate account of the vault on Bifrost/Hydration.
+// 32-byte substrate account of the vault on AssetHub (Polkadot Hub).
+// Derived from the contract's EVM address padded with 0xEE (use evmToSubstrate.ts).
 // Set VAULT_SUBSTRATE_ACCOUNT in .env after deploying CarryTradeVault.
 const VAULT_SUBSTRATE_ACCOUNT =
   process.env.VAULT_SUBSTRATE_ACCOUNT ??
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-// DOT amount for the call bytes (in 10-decimal Substrate planck units).
-// Set DOT_AMOUNT_PLANCK in .env to match the actual deposit amount.
+// DOT amounts for the call bytes (in 10-decimal Substrate planck units).
 // IMPORTANT: Regenerate call bytes before each executeCarry() call!
-// Example: 50 DOT = 500_000_000_000 planck (50 * 1e10)
-const DOT_AMOUNT_PLANCK = BigInt(
-  process.env.DOT_AMOUNT_PLANCK ?? "10000000000" // default: 1 DOT = 1e10 planck
+//
+// ─── Fee subtraction ────────────────────────────────────────────────────
+//
+// executeCarry() uses a 2-step XCM pattern per destination:
+//   Step 1 (execute): WithdrawAsset(dotAmount) + DepositReserveAsset → destination
+//     The inner XCM runs BuyExecution which deducts XCM_TRANSFER_FEE (0.01 DOT)
+//     from the transferred amount.
+//
+//   Step 2 (send): Transact calls slpx.mint / router.sell with the amount
+//     encoded in these call bytes.
+//
+// Therefore each amount must account for the 0.01 DOT fee deduction:
+//   BIFROST_DOT_PLANCK   = bifrostAmount - 0.01 DOT
+//   HYDRATION_DOT_PLANCK = hedgeAmount   - 0.01 DOT
+//
+// In planck (10 decimals): 0.01 DOT = 100_000_000 planck
+//
+// Example with 3 DOT deposit, 30% hedge ratio:
+//   Bifrost:   2.1 DOT - 0.01 = 2.09 DOT = 20_900_000_000 planck
+//   Hydration: 0.9 DOT - 0.01 = 0.89 DOT =  8_900_000_000 planck
+// ─────────────────────────────────────────────────────────────────────────
+const BIFROST_DOT_PLANCK = BigInt(
+  process.env.BIFROST_DOT_PLANCK ?? "20900000000" // default: 2.09 DOT (3 DOT deposit, 70%)
+);
+const HYDRATION_DOT_PLANCK = BigInt(
+  process.env.HYDRATION_DOT_PLANCK ?? "8900000000" // default: 0.89 DOT (3 DOT deposit, 30%)
 );
 
 // Hydration asset IDs (from Hydration runtime asset registry)
@@ -129,7 +152,7 @@ async function getBifrostMintCallBytes(): Promise<string> {
   //  @polkadot/api encodes enum variants as { Token2: 0 }, { AssetHub: accountId }
   const mintCall = api.tx.slpx.mint(
     { Token2: 0 },                             // CurrencyId::Token2(0) = DOT
-    DOT_AMOUNT_PLANCK,
+    BIFROST_DOT_PLANCK,
     { AssetHub: VAULT_SUBSTRATE_ACCOUNT },     // target chain + 32-byte receiver
     new Uint8Array(0),                         // empty remark
     0                                          // channel_id
@@ -184,7 +207,7 @@ async function getHydrationSellCallBytes(): Promise<string> {
   const sellCall = api.tx.router.sell(
     HYDRATION_DOT_ASSET_ID,          // asset_in  = DOT (5)
     HYDRATION_USDT_ASSET_ID,         // asset_out = USDT (10)
-    DOT_AMOUNT_PLANCK,
+    HYDRATION_DOT_PLANCK,
     0n,                              // min_amount_out — set slippage floor for mainnet
     []                               // route = [] → use stored on-chain route
   );
@@ -228,7 +251,9 @@ async function main() {
   console.log("=".repeat(62));
   console.log(" CarryTradeVault — SCALE Call Byte Generator");
   console.log("=".repeat(62));
-  console.log(`Vault substrate account: ${VAULT_SUBSTRATE_ACCOUNT}`);
+  console.log(`Vault substrate account:  ${VAULT_SUBSTRATE_ACCOUNT}`);
+  console.log(`Bifrost DOT (planck):    ${BIFROST_DOT_PLANCK}`);
+  console.log(`Hydration DOT (planck):  ${HYDRATION_DOT_PLANCK}`);
 
   // ── Fetch call bytes ───────────────────────────────────────────────────────
 
@@ -264,10 +289,9 @@ async function main() {
   console.log(`HYDRATION_ROUTER_SELL_CALL=${hydrationCallBytes}`);
   console.log();
   console.log("Next steps:");
-  console.log("  1. Deploy: npx hardhat run scripts/deploy.ts --network polkadotHub");
-  console.log("  2. Verify bytes on-chain via vault.bifrostMintCall() / vault.hydrationSellCall()");
-  console.log("  3. Pre-fund vault sovereign accounts on Bifrost (BNC) and Hydration (HDX)");
-  console.log("  4. Deposit DOT, then call executeCarry()");
+  console.log("  1. Paste the above values into .env");
+  console.log("  2. Set call templates: vault.setCallTemplates(BIFROST_MINT_CALL, HYDRATION_ROUTER_SELL_CALL)");
+  console.log("  3. Deposit DOT, then call executeCarry()");
 }
 
 main().catch((err) => {

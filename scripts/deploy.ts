@@ -32,8 +32,9 @@ const HEDGE_RATIO_BPS = 3000; // 30% hedge
 const BIFROST_MINT_CALL        = process.env.BIFROST_MINT_CALL            ?? "";
 const HYDRATION_ROUTER_SELL_CALL = process.env.HYDRATION_ROUTER_SELL_CALL ?? "";
 
-// 32-byte substrate account for the vault (receives minted vDOT and trade proceeds)
-// Derive this from the deployed contract address after deployment
+// 32-byte substrate account of the vault on AssetHub (Polkadot Hub).
+// Derived from the contract's EVM address padded with 0xEE (use evmToSubstrate.ts).
+// Set after deployment.
 const VAULT_SUBSTRATE_ACCOUNT = process.env.VAULT_SUBSTRATE_ACCOUNT ?? ethers.ZeroHash;
 
 // 32-byte AssetHub sovereign account on Bifrost/Hydration
