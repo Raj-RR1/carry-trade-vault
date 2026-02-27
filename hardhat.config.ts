@@ -18,19 +18,21 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    // Polkadot Hub Mainnet
+    // Polkadot Hub Mainnet — REVM (standard EVM bytecode)
     polkadotHub: {
-      url: "https://eth-rpc.polkadot.io/",
+      url: "https://services.polkadothub-rpc.com/mainnet/",
       chainId: 420420419,
       accounts: [PRIVATE_KEY],
+      gasPrice: 800_000_000_000,
     },
-    // Polkadot Hub Testnet (Paseo)
+    // Polkadot Hub Testnet — REVM
     polkadotHubTest: {
-      url: "https://eth-rpc-testnet.polkadot.io/",
+      url: "https://services.polkadothub-rpc.com/testnet/",
       chainId: 420420417,
       accounts: [PRIVATE_KEY],
+      gasPrice: 800_000_000_000,
     },
-    // Local Hardhat for unit tests
+    // Local Hardhat for unit tests — standard solc (no polkadot flag)
     hardhat: {
       chainId: 31337,
     },
