@@ -8,7 +8,7 @@ import { UserActions } from "./components/UserActions";
 import { useVault } from "./hooks/useVault";
 
 export default function App() {
-  const [status, setStatus] = useState("Connect wallet and set your deployed contract address.");
+  const [status, setStatus] = useState("Connect your wallet to get started.");
   const [contractAddress, setContractAddress] = useState(
     localStorage.getItem("vaultAddress") || import.meta.env.VITE_DEFAULT_CONTRACT_ADDRESS || ""
   );
@@ -28,14 +28,24 @@ export default function App() {
     <div className="app-shell">
       <Header />
 
-      <ContractPanel
-        contractAddress={contractAddress}
-        onContractAddressChange={setContractAddress}
-      />
+      {isOwner ? (
+        <ContractPanel
+          contractAddress={contractAddress}
+          onContractAddressChange={setContractAddress}
+        />
+      ) : (
+        <p className="helper" style={{ textAlign: "center" }}>
+          {contractAddress ? (
+            <>Vault: <code style={{ color: "var(--ink)", fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}>{contractAddress}</code></>
+          ) : (
+            "Vault not yet deployed"
+          )}
+        </p>
+      )}
 
       <StatsGrid stats={stats} />
 
-      <section className="grid two">
+      <section className={isOwner ? "grid two" : "grid-center"}>
         <UserActions
           stats={stats}
           canWrite={canWrite}
@@ -45,14 +55,16 @@ export default function App() {
           refresh={refresh}
         />
 
-        <OwnerActions
-          stats={stats}
-          isOwner={isOwner}
-          canWrite={canWrite}
-          pending={pending}
-          contractAddress={contractAddress}
-          executeTx={executeTx}
-        />
+        {isOwner && (
+          <OwnerActions
+            stats={stats}
+            isOwner={isOwner}
+            canWrite={canWrite}
+            pending={pending}
+            contractAddress={contractAddress}
+            executeTx={executeTx}
+          />
+        )}
       </section>
 
       <footer className="status">{status}</footer>

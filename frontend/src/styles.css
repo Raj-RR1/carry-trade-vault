@@ -59,6 +59,49 @@ body {
   border-radius: var(--radius);
 }
 
+/* ── Wallet Bar ── */
+
+.wallet-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.wallet-chain {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  background: transparent;
+  color: var(--ink-secondary);
+  border: 1px solid var(--border);
+}
+
+.wallet-chain:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+}
+
+.wallet-account {
+  width: auto;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent);
+}
+
+.wallet-balance {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.wallet-address {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -142,6 +185,16 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.grid-center {
+  display: flex;
+  justify-content: center;
+}
+
+.grid-center > * {
+  width: 100%;
+  max-width: 520px;
 }
 
 /* ── Actions Row ── */
