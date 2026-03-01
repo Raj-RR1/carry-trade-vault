@@ -75,7 +75,7 @@ Both messages from the same block are processed FIFO on the destination — Step
 | **weighMessage()** | Exact weight calculation for local execute — no hardcoded gas estimates |
 | **SCALE Encoding in Solidity** | `XCMBuilder.sol` — compact integers, XCM V5 instructions, asset/location encoding |
 | **Polkadot Native Assets** | DOT as `msg.value`; vDOT registered as foreign asset on AssetHub |
-| **Post-Migration DOT** | Correct `{parents:1, X1(Parachain(1000))}` DOT location (Nov 2025 reserve migration) |
+| **Post-Migration DOT** | DOT asset ID remains `{parents:1, Here}`; Asset Hub `{parents:1, X1(Parachain(1000))}` is the reserve chain |
 | **REVM Deployment** | Production flow uses standard EVM bytecode on Polkadot Hub EVM (REVM) |
 | **Split XCM Fees** | Per-destination fee constants matching BuyExecution upfront charging behavior |
 
@@ -307,8 +307,8 @@ compact(instruction_count)      ← number of instructions
 | Function | Purpose |
 |---|---|
 | `compactEncode(n)` | SCALE compact integer encoding |
-| `encodeDotAsset(amount)` | DOT as `{parents:0, Here}` with 18→10 decimal conversion |
-| `encodeDotAssetOnDestination(amount)` | DOT as `{parents:1, X1(Parachain(1000))}` on siblings |
+| `encodeDotAsset(amount)` | DOT asset ID as `{parents:1, Here}` with 18→10 decimal conversion |
+| `encodeDotAssetOnDestination(amount)` | Same DOT asset ID `{parents:1, Here}` from sibling-chain perspective |
 | `buildDotTransferXCM(...)` | Step 1: WithdrawAsset + DepositReserveAsset (for execute) |
 | `buildBifrostTransactXCM(...)` | Step 2: 5-instruction Transact message (for send to Bifrost) |
 | `buildHydrationTransactXCM(...)` | Step 2: 5-instruction Transact message (for send to Hydration) |

@@ -32,6 +32,13 @@ const config: HardhatUserConfig = {
       accounts: [PRIVATE_KEY],
       gasPrice: 800_000_000_000,
     },
+    // Polkadot Hub Mainnet — PVM RPC (same chain, different RPC endpoint)
+    polkadotHubPVM: {
+      url: "https://eth-rpc.polkadot.io",
+      chainId: 420420419,
+      accounts: [PRIVATE_KEY],
+      gasPrice: 800_000_000_000,
+    },
     // Local Hardhat for unit tests — standard solc (no polkadot flag)
     hardhat: {
       chainId: 31337,
